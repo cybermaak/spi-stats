@@ -1,0 +1,32 @@
+services:
+  pibox-framebuffer:
+    image: ghcr.io/cybermaak/pibox-framebuffer:latest
+    container_name: pibox-framebuffer2
+    privileged: true
+    devices:
+      - /dev/mem:/dev/mem
+      - /dev/gpiomem:/dev/gpiomem
+      - /dev/spidev0.0:/dev/spidev0.0
+      - /dev/spidev0.1:/dev/spidev0.1
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:2019/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  stats:
+    build: .
+    image: spi-stats
+    container_name: stats
+    depends_on:
+      - pibox-framebuffer
+    network_mode: "host"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "pgrep", "-f", "python stats.py" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
