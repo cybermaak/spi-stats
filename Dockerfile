@@ -37,7 +37,7 @@ COPY src/ /app/src/
 
 # Health check to ensure stats.py is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD pgrep -f "python3 src/stats.py" || exit 1
+    CMD pgrep -f "python3 /app/src/stats.py" || exit 1
 
 # Run the startup script
 CMD ["python3", "/app/src/stats.py"]
