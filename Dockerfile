@@ -8,6 +8,7 @@ ENV PATH=/root/.local/bin:$PATH
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
+    procps \
     libfontconfig1 \
     libegl1 \
     libgl1 \
@@ -31,12 +32,12 @@ COPY fonts/ /app/fonts/
 # Removing this font conf file because it cause a noise warning in pictex
 RUN rm /usr/share/fontconfig/conf.avail/05-reset-dirs-sample.conf
 
-# Copy stats.py
-COPY stats.py /app/
+# Copy src directory
+COPY src/ /app/src/
 
 # Health check to ensure stats.py is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD pgrep -f "python3 stats.py" || exit 1
+    CMD pgrep -f "python3 src/stats.py" || exit 1
 
 # Run the startup script
-CMD ["python3", "/app/stats.py"]
+CMD ["python3", "/app/src/stats.py"]

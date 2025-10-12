@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Local development script for stats.py
+# Local development script for src/stats.py
 # This assumes pibox-framebuffer is already running on localhost:2019
 
 set -e
 
-echo "Setting up local development environment for stats.py..."
+echo "Setting up local development environment for src/stats.py..."
 
 # Check if virtual environment exists, create if not
 if [ ! -d ".venv" ]; then
@@ -40,5 +40,5 @@ else
 fi
 
 echo ""
-echo "Starting stats.py locally..."
-python stats.py
+echo "Starting src/stats.py locally..."
+python src/stats.py

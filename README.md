@@ -54,7 +54,7 @@ services:
       - /:/host/disk_root:ro # Mount host's root disk to get host disk stats    
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "pgrep", "-f", "python stats.py" ]
+      test: [ "CMD", "pgrep", "-f", "python src/stats.py" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -70,7 +70,7 @@ This is done instead of have the two communicate on the stack network to be able
 ## Architecture
 
 - **pibox-framebuffer**: Runs as a separate Docker container from `ghcr.io/cybermaak/pibox-framebuffer:latest` on port 2019
-- **stats.py**: Python script that collects system stats and sends them to the framebuffer service via HTTP
+- **src/stats.py**: Python script that collects system stats and sends them to the framebuffer service via HTTP
 
 ## Quick Start
 
@@ -95,7 +95,7 @@ This will:
 
 ### Local Development
 
-To run stats.py locally (useful for development):
+To run src/stats.py locally (useful for development):
 
 ```bash
 ./run-local.sh

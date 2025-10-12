@@ -28,7 +28,7 @@ services:
       - /:/host/disk_root:ro # Mount host's root disk to get host disk stats
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "pgrep", "-f", "python stats.py" ]
+      test: [ "CMD", "pgrep", "-f", "python src/stats.py" ]
       interval: 30s
       timeout: 10s
       retries: 3
