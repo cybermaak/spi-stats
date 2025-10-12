@@ -49,6 +49,9 @@ services:
     depends_on:
       - pibox-framebuffer
     network_mode: "host"
+    volumes:
+      - /proc:/host/proc:ro # Mount host's /proc to /host/proc to pull host stats
+      - /:/host/disk_root:ro # Mount host's root disk to get host disk stats    
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "pgrep", "-f", "python stats.py" ]
@@ -56,6 +59,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    environment:
+      - PROCFS_PATH=/host/proc
+      - DISK_ROOT=/host/disk_root
 ```
 
 **Note:** You may notice that `pibox-framebuffer` is forwarding its port to the host and that the `spi-state` is using `host` network. 

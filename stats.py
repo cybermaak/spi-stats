@@ -5,6 +5,7 @@ import requests
 import skia
 from pictex import Row, Column, Canvas, Text
 import multiprocessing as mp
+import os
 
 SCREEN_HEIGHT = 240
 SCREEN_WIDTH = 240
@@ -13,6 +14,9 @@ SCREEN_WIDTH = 240
 HTTP_ENDPOINT = "http://localhost:2019/image"
 
 http_session = requests.Session()
+
+psutil.PROCFS_PATH = os.getenv("PROCFS_PATH", psutil.PROCFS_PATH)
+DISK_ROOT = os.getenv("DISK_ROOT", "/")
 
 # using https://github.com/kubesail/pibox-framebuffer to render images as it python st7789 libraries cause flickering
 def send_png_buffer_to_display(png_buffer):
@@ -69,7 +73,7 @@ class SystemStats:
     @staticmethod
     def get_disk_stats():
         """Get disk usage statistics"""
-        disk = psutil.disk_usage("/")
+        disk = psutil.disk_usage(DISK_ROOT)
         disk_used_gb = disk.used // (1024 * 1024 * 1024)
         disk_total_gb = disk.total // (1024 * 1024 * 1024)
         disk_percent = (disk.used / disk.total) * 100
