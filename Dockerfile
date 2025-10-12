@@ -8,6 +8,7 @@ ENV PATH=/root/.local/bin:$PATH
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
+    libfontconfig1 \
     libegl1 \
     libgl1 \
     libegl-mesa0 \
@@ -27,6 +28,8 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Copy fonts directory
 COPY fonts/ /app/fonts/
+# Removing this font conf file because it cause a noise warning in pictex
+RUN rm /usr/share/fontconfig/conf.avail/05-reset-dirs-sample.conf
 
 # Copy stats.py
 COPY stats.py /app/
