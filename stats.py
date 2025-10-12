@@ -7,6 +7,7 @@ from pictex import Row, Column, Canvas, Text
 import multiprocessing as mp
 import os
 from humanize import naturalsize
+import atexit
 
 SCREEN_HEIGHT = 240
 SCREEN_WIDTH = 240
@@ -38,6 +39,24 @@ def send_png_buffer_to_display(png_buffer):
         return None
 
 
+blank_image = (
+    Canvas()
+    .size(SCREEN_HEIGHT, SCREEN_WIDTH)
+    .background_color("black")
+    .render(Text(""))
+)
+blank_image_buffer = bytes(
+    skia.Image.encodeToData(blank_image.skia_image, skia.kPNG, 100)
+)
+
+
+def exit_handler():
+    send_png_buffer_to_display(blank_image_buffer)
+
+
+atexit.register(exit_handler)
+
+
 class SystemStats:
     """Static class for collecting system statistics"""
 
@@ -56,32 +75,17 @@ class SystemStats:
     @staticmethod
     def get_cpu_stats():
         """Get CPU load average"""
-        cpu_load = psutil.getloadavg()[0]
-        return cpu_load, f"Load: {cpu_load:.2f}"
+        return psutil.getloadavg()[0]
 
     @staticmethod
     def get_memory_stats():
         """Get memory usage statistics"""
-        memory = psutil.virtual_memory()
-        mem_used_gb = naturalsize(memory.used, False, True)
-        mem_total_gb = naturalsize(memory.total, False, True)
-        mem_percent = memory.percent
-        return (
-            mem_percent,
-            f" RAM: {mem_used_gb}/{mem_total_gb} ({mem_percent}%)",
-        )
+        return psutil.virtual_memory()
 
     @staticmethod
     def get_disk_stats():
         """Get disk usage statistics"""
-        disk = psutil.disk_usage(DISK_ROOT)
-        disk_used_gb = naturalsize(disk.used, False, True)
-        disk_total_gb = naturalsize(disk.total, False, True)
-        disk_percent = (disk.used / disk.total) * 100
-        return (
-            disk_percent,
-            f"Disk: {disk_used_gb}/{disk_total_gb} ({disk_percent:.0f}%)",
-        )
+        return psutil.disk_usage(DISK_ROOT)
 
     @staticmethod
     def get_temperature_stats():
@@ -97,104 +101,111 @@ class SystemStats:
                 # Fallback to reading thermal zone file
                 with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
                     cpu_temp = int(f.read().strip()) / 1000
-            return cpu_temp, f"Temp: {cpu_temp:.1f}°C"
+            return cpu_temp
         except:
-            return 0, "Temp: N/A"
+            return 0
 
 
 # Font configuration - load once at startup
 font_family = "./fonts/JetBrainsMono-SemiBold.ttf"
 emoji_font_family = "./fonts/NotoColorEmoji.ttf"
 
-title = Text("═ SYSTEM MONITOR ═").font_size(20).color("white")
 
-network_icon = Text("🌐").font_family(emoji_font_family).color("lightblue")
-cpu_icon = Text("⚡").font_family(emoji_font_family).color("yellow")
-memory_icon = Text("�").font_family(emoji_font_family).color("lightgreen")
-disk_icon = Text("💿").font_family(emoji_font_family).color("lightcyan")
-temp_icon = Text("🌡️").font_family(emoji_font_family).color("cyan")
+class Stat:
+    def __init__(
+        self, icon, label, color, get_stat, state_string, is_warning, is_critical
+    ):
+        self.icon = icon
+        self.label = label
+        self.color = color
+        self.get_stat = get_stat
+        self.state_string = state_string
+        self.is_warning = is_warning
+        self.is_critical = is_critical
 
-
-def create_display_composition(
-    ip_text,
-    cpu_text,
-    mem_text,
-    disk_text,
-    temp_text,
-    cpu_load,
-    mem_percent,
-    disk_percent,
-    cpu_temp,
-):
-    """Create the display composition with all system information"""
-    return (
-        Column(
-            title,
-            Row(network_icon, Text(ip_text).color("lightblue")),
-            Row(
-                cpu_icon,
-                Text(cpu_text).color(
-                    "yellow"
-                    if cpu_load < 2.0
-                    else "orange" if cpu_load < 4.0 else "red"
-                ),
-            ),
-            Row(
-                memory_icon,
-                Text(mem_text).color(
-                    "lightgreen"
-                    if mem_percent < 70
-                    else "orange" if mem_percent < 85 else "red"
-                ),
-            ),
-            Row(
-                disk_icon,
-                Text(disk_text).color(
-                    "lightcyan"
-                    if disk_percent < 80
-                    else "orange" if disk_percent < 90 else "red"
-                ),
-            ),
-            Row(
-                temp_icon,
-                Text(temp_text).color(
-                    "cyan"
-                    if "N/A" in temp_text or cpu_temp < 60
-                    else "orange" if cpu_temp < 75 else "red"
-                ),
-            ),
+    def update_render(self):
+        stat = self.get_stat()
+        stat_text = self.state_string(stat)
+        stat_color = (
+            "red"
+            if self.is_critical(stat)
+            else "orange" if self.is_warning(stat) else self.color
         )
-        .padding(15, 15, 15, 15)
-        .font_size(18)
-    )
+
+        return Row(
+            Text(self.icon).font_family(emoji_font_family),
+            Text(self.label).color(self.color),
+            Text(stat_text).color(stat_color),
+        )
+
+
+ip_stat = Stat(
+    icon="🌐",
+    label="",
+    color="lightblue",
+    get_stat=SystemStats.get_ip_address,
+    state_string=lambda stat: stat,
+    is_warning=lambda stat: False,
+    is_critical=lambda stat: False,
+)
+
+cpu_stat = Stat(
+    icon="⚡",
+    label="Load: ",
+    color="yellow",
+    get_stat=SystemStats.get_cpu_stats,
+    state_string=lambda stat: f"{stat:.2f}",
+    is_warning=lambda stat: stat >= 2.0,
+    is_critical=lambda stat: stat >= 4.0,
+)
+
+mem_stat = Stat(
+    icon="💾",
+    label="RAM: ",
+    color="lightgreen",
+    get_stat=SystemStats.get_memory_stats,
+    state_string=lambda memory: f" {naturalsize(memory.used, False, True)}/{naturalsize(memory.total, False, True)} ({(memory.percent):.0f}%)",
+    is_warning=lambda memory: memory.percent >= 70,
+    is_critical=lambda memory: memory.percent >= 85,
+)
+
+disk_stat = Stat(
+    icon="💿",
+    label="Disk: ",
+    color="lightcyan",
+    get_stat=SystemStats.get_disk_stats,
+    state_string=lambda disk: f"{naturalsize(disk.used, False, True)}/{naturalsize(disk.total, False, True)} ({(disk.used / disk.total) * 100:.0f}%)",
+    is_warning=lambda disk: ((disk.used / disk.total) * 100) >= 80,
+    is_critical=lambda disk: ((disk.used / disk.total) * 100) >= 90,
+)
+
+temp_stat = Stat(
+    icon="🌡️",
+    label="Temp: ",
+    color="cyan",
+    get_stat=SystemStats.get_temperature_stats,
+    state_string=lambda cpu_temp: f"{cpu_temp:.1f}°C",
+    is_warning=lambda cpu_temp: cpu_temp >= 60,
+    is_critical=lambda cpu_temp: cpu_temp >= 70,
+)
+
+title = Text("═ SYSTEM MONITOR ═").font_size(20).color("white")
+stats = [ip_stat, cpu_stat, mem_stat, disk_stat, temp_stat]
 
 canvas = Canvas().font_family(font_family).size(SCREEN_HEIGHT, SCREEN_WIDTH)
-      
+
 while True:
+
     def update_stats():
-        # Collect system statistics
-        ip_addr = SystemStats.get_ip_address()
-        cpu_load, cpu_text = SystemStats.get_cpu_stats()
-        mem_percent, mem_text = SystemStats.get_memory_stats()
-        disk_percent, disk_text = SystemStats.get_disk_stats()
-        cpu_temp, temp_text = SystemStats.get_temperature_stats()
 
         # Send image to display server
         try:
-            composition = create_display_composition(
-                ip_addr,
-                cpu_text,
-                mem_text,
-                disk_text,
-                temp_text,
-                cpu_load,
-                mem_percent,
-                disk_percent,
-                cpu_temp,
-            )
+            stats_rows = [title] + [stat.update_render() for stat in stats]
+            composition = Column(*stats_rows).padding(15, 15, 15, 15).font_size(18)
 
             # Render and get PNG buffer directly from skia_image
-            rendered = canvas.render(composition)            
+            rendered = canvas.render(composition)
+
             png_data = skia.Image.encodeToData(rendered.skia_image, skia.kPNG, 100)
             png_buffer = bytes(png_data)
             send_png_buffer_to_display(png_buffer)
