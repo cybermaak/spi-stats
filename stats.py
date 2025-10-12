@@ -6,6 +6,7 @@ import skia
 from pictex import Row, Column, Canvas, Text
 import multiprocessing as mp
 import os
+from humanize import naturalsize
 
 SCREEN_HEIGHT = 240
 SCREEN_WIDTH = 240
@@ -62,24 +63,24 @@ class SystemStats:
     def get_memory_stats():
         """Get memory usage statistics"""
         memory = psutil.virtual_memory()
-        mem_used_gb = memory.used // (1024 * 1024 * 1024)
-        mem_total_gb = memory.total // (1024 * 1024 * 1024)
+        mem_used_gb = naturalsize(memory.used, False, True)
+        mem_total_gb = naturalsize(memory.total, False, True)
         mem_percent = memory.percent
         return (
             mem_percent,
-            f" RAM: {mem_used_gb:.1f}/{mem_total_gb:.1f}GB ({mem_percent:.0f}%)",
+            f" RAM: {mem_used_gb}/{mem_total_gb} ({mem_percent}%)",
         )
 
     @staticmethod
     def get_disk_stats():
         """Get disk usage statistics"""
         disk = psutil.disk_usage(DISK_ROOT)
-        disk_used_gb = disk.used // (1024 * 1024 * 1024)
-        disk_total_gb = disk.total // (1024 * 1024 * 1024)
+        disk_used_gb = naturalsize(disk.used, False, True)
+        disk_total_gb = naturalsize(disk.total, False, True)
         disk_percent = (disk.used / disk.total) * 100
         return (
             disk_percent,
-            f"Disk: {disk_used_gb}/{disk_total_gb}GB ({disk_percent:.0f}%)",
+            f"Disk: {disk_used_gb}/{disk_total_gb} ({disk_percent:.0f}%)",
         )
 
     @staticmethod
@@ -105,7 +106,7 @@ class SystemStats:
 font_family = "./fonts/JetBrainsMono-SemiBold.ttf"
 emoji_font_family = "./fonts/NotoColorEmoji.ttf"
 
-title = Text("══ SYSTEM MONITOR ══").font_size(20).color("white")
+title = Text("═ SYSTEM MONITOR ═").font_size(20).color("white")
 
 network_icon = Text("🌐").font_family(emoji_font_family).color("lightblue")
 cpu_icon = Text("⚡").font_family(emoji_font_family).color("yellow")
