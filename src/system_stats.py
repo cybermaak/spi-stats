@@ -23,7 +23,7 @@ class SystemStats:
     @staticmethod
     def get_cpu_stats():
         """Get CPU load average"""
-        return psutil.cpu_percent(1.0)
+        return psutil.cpu_percent(0.1)
 
     @staticmethod
     def get_memory_stats():

@@ -155,7 +155,8 @@ sudo docker compose up -d --build
 ```yml
 services:
   spi-stats:
-    build: .
+    image: ghcr.io/cybermaak/spi-stats:latest
+    container_name: spi-stats
     privileged: true
     devices:
       - /dev/mem:/dev/mem
