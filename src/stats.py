@@ -14,7 +14,10 @@ from humanize import naturalsize
 from adafruit_rgb_display import st7789
 from system_stats import SystemStats
 from stat_row import StatRow
-from display_config import (CS_PIN, DC_PIN, RESET_PIN, BAUDRATE, DISPLAY_CONFIG)
+from display_config import (
+    SCREEN_WIDTH, SCREEN_HEIGHT, CS_PIN, DC_PIN, RESET_PIN, 
+    BAUDRATE, DISPLAY_CONFIG, TITLE_FONT_SIZE, STATS_FONT_SIZE
+)
 
 MAIN_FONT = "./fonts/JetBrainsMono-SemiBold.ttf"
 
@@ -106,10 +109,10 @@ temp_stat = StatRow(
     is_critical=lambda cpu_temp: cpu_temp >= 70,
 )
 
-title = Text("═ SYSTEM MONITOR ═").font_size(20).color("white")
+title = Text("═ SYSTEM MONITOR ═").font_size(TITLE_FONT_SIZE).color("white")
 stats = [ip_stat, cpu_stat, mem_stat, disk_stat, temp_stat]
 
-canvas = Canvas().font_family(MAIN_FONT).size(disp.width, disp.height)
+canvas = Canvas().font_family(MAIN_FONT).size(SCREEN_WIDTH, SCREEN_HEIGHT)
 
 # Initialize display with blank screen
 blank_image = create_blank_image()
@@ -121,7 +124,7 @@ try:
             # Send image to display
             try:
                 stats_rows = [title] + [stat.update_compose().max_width(disp.width) for stat in stats]
-                composition = Column(*stats_rows).font_size(18)
+                composition = Column(*stats_rows).font_size(STATS_FONT_SIZE)
 
                 pil_image = canvas.render(composition).to_pillow()
 

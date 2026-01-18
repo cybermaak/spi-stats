@@ -17,7 +17,10 @@ spi-stats/
 │   └── NotoColorEmoji.ttf
 ├── requirements.txt              # Python dependencies
 ├── Dockerfile                    # Docker container definition
-├── docker-compose.yml           # Docker stack configuration
+├── docker-compose.yml           # Docker stack configuration (240x240)
+├── docker-compose.1.14inch.yml  # 1.14" 135x240 display config
+├── docker-compose.1.47inch.yml  # 1.47" 172x320 display config
+├── docker-compose.1.9inch.yml   # 1.9" 170x320 display config
 ├── run.sh                        # Start Docker stack
 ├── run-local.sh                  # Start native SPI mode
 ├── build.sh                      # Build Docker image
@@ -91,12 +94,18 @@ spidev
 - Runs `stats.py` with direct SPI access
 - Includes health checks
 
-**`docker-compose.yml`** - Stack orchestration
+**`docker-compose.yml`** - Stack orchestration (240x240 default)
 - Single spi-stats service
 - Privileged mode for hardware access
 - Volume mounts for host system access
 - Health checks and restart policies
 - Device mounts for SPI hardware
+- Environment variables for display configuration
+
+**`docker-compose.*.yml`** - Display-specific configurations
+- Pre-configured for common ST7789 display sizes
+- Optimized font sizes for each screen size
+- Proper offset and rotation settings
 
 ## Script Files
 

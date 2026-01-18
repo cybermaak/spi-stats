@@ -40,29 +40,67 @@ This script will automatically:
 
 ## Display Configuration
 
-The direct SPI mode supports various ST7789 display configurations. Edit `src/display_config.py` to match your display:
+The project supports various ST7789 display configurations through environment variables. You can adjust these settings in the docker-compose.yml file or set them as environment variables for native deployment.
 
-```python
-# 240x240 Square Display (default)
-DISPLAY_CONFIG = {
-    "rotation": 0,
-    "width": 240,
-    "height": 240,
-    "x_offset": 0,
-    "y_offset": 0,
-}
+### Configuration Variables
 
-# 1.14" 135x240 ST7789
-# DISPLAY_CONFIG = {
-#     "rotation": 90,
-#     "width": 135,
-#     "height": 240,
-#     "x_offset": 53,
-#     "y_offset": 40,
-# }
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `SCREEN_WIDTH` | Display width in pixels | 240 |
+| `SCREEN_HEIGHT` | Display height in pixels | 240 |
+| `DISPLAY_ROTATION` | Display rotation (0, 90, 180, 270) | 180 |
+| `DISPLAY_X_OFFSET` | X-axis offset for display alignment | 0 |
+| `DISPLAY_Y_OFFSET` | Y-axis offset for display alignment | 70 |
+| `TITLE_FONT_SIZE` | Font size for the title text | 20 |
+| `STATS_FONT_SIZE` | Font size for the statistics text | 18 |
+
+### Pre-configured Display Sizes
+
+The project includes pre-configured docker-compose files for common display sizes:
+
+**240x240 (Default):**
+```bash
+./run.sh  # Uses docker-compose.yml
 ```
 
-Common display variants are included as commented examples in the config file.
+**1.14" 135x240 Display:**
+```bash
+sudo docker compose -f docker-compose.1.14inch.yml up -d --build
+```
+
+**1.47" 172x320 Display:**
+```bash
+sudo docker compose -f docker-compose.1.47inch.yml up -d --build
+```
+
+**1.9" 170x320 Display:**
+```bash
+sudo docker compose -f docker-compose.1.9inch.yml up -d --build
+```
+
+### Custom Configuration
+
+To use a custom display configuration, modify the environment variables in docker-compose.yml:
+
+```yml
+environment:
+  - SCREEN_WIDTH=240
+  - SCREEN_HEIGHT=320
+  - DISPLAY_ROTATION=90
+  - DISPLAY_X_OFFSET=0
+  - DISPLAY_Y_OFFSET=0
+  - TITLE_FONT_SIZE=22
+  - STATS_FONT_SIZE=20
+```
+
+For native deployment, set environment variables before running:
+
+```bash
+export SCREEN_WIDTH=135
+export SCREEN_HEIGHT=240
+export DISPLAY_ROTATION=90
+./run-local.sh
+```
 
 ## Hardware Requirements
 
@@ -164,12 +202,28 @@ services:
       - /dev/spidev0.0:/dev/spidev0.0
       - /dev/spidev0.1:/dev/spidev0.1
     volumes:
-      - /proc:/host/proc:ro
-      - /:/host/disk_root:ro
+      - /proc:/host/proc:ro # Mount host's /proc to /host/proc to pull host stats
+      - /:/host/disk_root:ro # Mount host's root disk to get host disk stats
     restart: unless-stopped
+    network_mode: host
+    healthcheck:
+      test: [ "CMD", "pgrep", "-f", "python3 /app/src/stats.py" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     environment:
       - PROCFS_PATH=/host/proc
       - DISK_ROOT=/host/disk_root
+      # Display configuration - adjust for your screen
+      - SCREEN_WIDTH=240
+      - SCREEN_HEIGHT=240
+      - DISPLAY_ROTATION=180
+      - DISPLAY_X_OFFSET=0
+      - DISPLAY_Y_OFFSET=70
+      # Font sizes - adjust for your screen size
+      - TITLE_FONT_SIZE=20
+      - STATS_FONT_SIZE=18
 ```
 
 ### Docker Commands

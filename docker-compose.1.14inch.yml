@@ -22,12 +22,12 @@ services:
     environment:
       - PROCFS_PATH=/host/proc
       - DISK_ROOT=/host/disk_root
-      # Display configuration - adjust for your screen
-      - SCREEN_WIDTH=240
+      # 1.14" 135x240 ST7789 Display Configuration
+      - SCREEN_WIDTH=135
       - SCREEN_HEIGHT=240
-      - DISPLAY_ROTATION=180
-      - DISPLAY_X_OFFSET=0
-      - DISPLAY_Y_OFFSET=70
-      # Font sizes - adjust for your screen size
-      - TITLE_FONT_SIZE=20
-      - STATS_FONT_SIZE=18
+      - DISPLAY_ROTATION=90
+      - DISPLAY_X_OFFSET=53
+      - DISPLAY_Y_OFFSET=40
+      # Smaller font sizes for smaller screen
+      - TITLE_FONT_SIZE=16
+      - STATS_FONT_SIZE=14

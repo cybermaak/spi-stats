@@ -104,33 +104,19 @@ python src/stats.py
 
 ## Configuration
 
-### Display Configuration
+### Display Settings
 
-Edit `src/display_config.py` to match your specific display:
+The project supports various ST7789 display sizes and configurations through environment variables. See the main README.md for detailed configuration options.
 
-```python
-# For 240x240 displays (default)
-DISPLAY_CONFIG = {
-    "rotation": 0,
-    "width": 240,
-    "height": 240,
-    "x_offset": 0,
-    "y_offset": 0,
-}
-
-# For 1.14" 135x240 displays
-DISPLAY_CONFIG = {
-    "rotation": 90,
-    "width": 135,
-    "height": 240,
-    "x_offset": 53,
-    "y_offset": 40,
-}
-```
+For quick setup with common display sizes:
+- **240x240**: Use default `./run.sh`
+- **1.14" 135x240**: `sudo docker compose -f docker-compose.1.14inch.yml up -d --build`
+- **1.47" 172x320**: `sudo docker compose -f docker-compose.1.47inch.yml up -d --build`
+- **1.9" 170x320**: `sudo docker compose -f docker-compose.1.9inch.yml up -d --build`
 
 ### Pin Configuration
 
-If your wiring differs from the standard setup, modify the pin assignments in `src/display_config.py`:
+If your wiring differs from the standard setup, the pin assignments are defined in `src/display_config.py`:
 
 ```python
 CS_PIN = digitalio.DigitalInOut(board.CE0)    # GPIO 8
