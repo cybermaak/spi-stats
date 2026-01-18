@@ -6,8 +6,7 @@ import io
 import traceback
 
 import board
-from PIL import Image
-import skia
+from PIL import Image, ImageOps
 from pictex import Column, Canvas, Text
 from humanize import naturalsize
 
@@ -41,12 +40,15 @@ def send_image_to_display(pil_image):
         return True
     except Exception as e:
         print(f"Error sending image to display: {e}")
+        image_size = pil_image.size
+        # Print the width and height from the tuple
+        print(f"3.Image size (width, height): {image_size}")
         traceback.print_exc()
         return False
 
-def create_blank_image():
+def create_blank_image(width, height):
     """Create a blank black image"""
-    return Image.new("RGB", (disp.width, disp.height), (0, 0, 0))
+    return Image.new("RGB", (width, height), (0, 0, 0))
 
 
 def shutdown_handler(_signum, _frame):
@@ -109,13 +111,23 @@ temp_stat = StatRow(
     is_critical=lambda cpu_temp: cpu_temp >= 70,
 )
 
+# Create blank image for drawing.
+# Make sure to create image with mode 'RGB' for full color.
+if disp.rotation % 180 == 90:
+    height = disp.width  # we swap height/width to rotate it to landscape!
+    width = disp.height
+else:
+    width = disp.width  # we swap height/width to rotate it to landscape!
+    height = disp.height
+
 title = Text("═ SYSTEM MONITOR ═").font_size(TITLE_FONT_SIZE).color("white")
 stats = [ip_stat, cpu_stat, mem_stat, disk_stat, temp_stat]
 
-canvas = Canvas().font_family(MAIN_FONT).size(SCREEN_WIDTH, SCREEN_HEIGHT)
+canvas = Canvas().font_family(MAIN_FONT).size(width, height)
 
+print(f"Display initialized: {disp.width}x{disp.height}, rotation: {disp.rotation}")
 # Initialize display with blank screen
-blank_image = create_blank_image()
+blank_image = create_blank_image(width, height)
 send_image_to_display(blank_image)
 
 try:
@@ -123,28 +135,36 @@ try:
         def update_stats():
             # Send image to display
             try:
-                stats_rows = [title] + [stat.update_compose().max_width(disp.width) for stat in stats]
+                #print("Timestamp 2:", time.time())
+                #title = Text(f"{ts}").font_size(TITLE_FONT_SIZE).color("white")
+                stats_rows = [title] + [stat.update_compose().max_width(width) for stat in stats]
                 composition = Column(*stats_rows).font_size(STATS_FONT_SIZE)
 
                 pil_image = canvas.render(composition).to_pillow()
+                #print("Timestamp 3:", time.time())
 
                 # Ensure RGB mode for display compatibility                
                 # print(f"Converting PIL image from {pil_image.mode} to RGB mode")
                 pil_image = (pil_image.convert('RGB')) if pil_image.mode != 'RGB' else pil_image
 
+                pil_image = ImageOps.contain(pil_image, (width, height))
+                #print("Timestamp 4:", time.time())
+
                 # Send directly to SPI display
                 send_image_to_display(pil_image)
+                #print("Timestamp 5:", time.time())
+
 
             except Exception as e:
                 print(f"Error rendering or sending image to display: {e}")                
                 traceback.print_exc()
-
+        #print("************Timestamp 1:", time.time())
         # Repeated rendering in Canvas leaks memory pretty quickly. I've tried explicit gc.collect() in addition
         # to malloc_trim, but the process memory never went down, hence this process forking
         proc = mp.Process(target=update_stats)
         proc.start()
         proc.join()
 
-        time.sleep(1)
+        time.sleep(0.5)
 except KeyboardInterrupt:
     shutdown_handler(0, 0)
