@@ -1,12 +1,18 @@
 #!/bin/bash
 
-# Build script for stats.py Docker container
+# Build script for SPI stats Docker container
 
 set -e
 
-echo "Building stats Docker image..."
-sudo docker compose build 
+echo "Building SPI stats Docker image..."
+echo "=================================="
+echo ""
 
+sudo docker compose build spi-stats
+
+echo ""
 echo "Build completed successfully!"
-echo "To run the complete stack, use: ./run.sh"
-echo "To run just the stats container (assuming pibox-framebuffer is running): sudo docker run --rm --network host stats:latest"
+echo ""
+echo "Available deployment options:"
+echo "1. Docker SPI mode: ./run.sh"
+echo "2. Native SPI mode: ./run-local.sh"

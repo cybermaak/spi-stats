@@ -1,13 +1,35 @@
 #!/bin/bash
 
-# Local development script for src/stats.py
-# This assumes pibox-framebuffer is already running on localhost:2019
+# Local development script for direct SPI mode
+# This runs the SPI version directly on the host
 
 set -e
 
-echo "Setting up local development environment for src/stats.py..."
+echo "Starting SPI Stats Monitor..."
+echo "================================"
 
-# Check if virtual environment exists, create if not
+# Check if we're on a Raspberry Pi
+if ! command -v raspi-config &> /dev/null; then
+    echo "Warning: This doesn't appear to be a Raspberry Pi"
+    echo "The display may not work properly"
+fi
+
+# Check if SPI is enabled
+if ! lsmod | grep -q spi; then
+    echo "Warning: SPI doesn't appear to be enabled"
+    echo "Enable SPI with: sudo raspi-config"
+    echo "Navigate to Interface Options > SPI > Enable"
+fi
+
+# Install system dependencies if needed
+echo "Checking system dependencies..."
+if ! dpkg -l | grep -q python3-dev; then
+    echo "Installing system dependencies..."
+    sudo apt update
+    sudo apt install -y python3-dev python3-pip python3-venv
+fi
+
+# Check if virtual environment exists
 if [ ! -d ".venv" ]; then
     echo "Creating Python virtual environment..."
     python3 -m venv .venv
@@ -17,28 +39,28 @@ fi
 echo "Activating virtual environment..."
 source .venv/bin/activate
 
-# Install dependencies
+# Install/upgrade requirements
 echo "Installing Python dependencies..."
+pip install --upgrade pip
 pip install -r requirements.txt
 
-# Check if pibox-framebuffer is running
-echo "Checking if pibox-framebuffer is running on localhost:2019..."
-if curl -s -f http://localhost:2019/health > /dev/null 2>&1; then
-    echo "✓ pibox-framebuffer is running on localhost:2019"
+# Test SPI display
+echo "Testing SPI display configuration..."
+if python src/test_display.py --test-only 2>/dev/null; then
+    echo "✓ SPI display test passed"
 else
-    echo "⚠️  pibox-framebuffer is not responding on localhost:2019"
-    echo "   Make sure to start it first with:"
-    echo "   sudo docker run -d --privileged --name pibox-framebuffer -p 2019:2019 \\"
-    echo "     --device /dev/mem:/dev/mem \\"
-    echo "     --device /dev/gpiomem:/dev/gpiomem \\"
-    echo "     --device /dev/spidev0.0:/dev/spidev0.0 \\"
-    echo "     --device /dev/spidev0.1:/dev/spidev0.1 \\"
-    echo "     ghcr.io/cybermaak/pibox-framebuffer:latest"
+    echo "⚠️  SPI display test failed"
+    echo "   Make sure:"
+    echo "   1. SPI is enabled: sudo raspi-config"
+    echo "   2. Display is connected properly"
+    echo "   3. Check src/display_config.py for correct settings"
     echo ""
-    echo "Or use the full stack with: ./run.sh"
-    exit 1
+    echo "Continuing anyway..."
 fi
 
 echo ""
-echo "Starting src/stats.py locally..."
+echo "Starting SPI stats monitor..."
+echo "Press Ctrl+C to stop"
+echo "================================"
+
 python src/stats.py

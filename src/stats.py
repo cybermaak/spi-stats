@@ -1,65 +1,59 @@
 import time
 import signal
 import sys
-import os
 import multiprocessing as mp
-import array
+import io
+import traceback
 
-import requests
+import board
+from PIL import Image
 import skia
 from pictex import Column, Canvas, Text
 from humanize import naturalsize
 
+from adafruit_rgb_display import st7789
 from system_stats import SystemStats
 from stat_row import StatRow
-
-
-SCREEN_HEIGHT = 240
-SCREEN_WIDTH = 240
+from display_config import (CS_PIN, DC_PIN, RESET_PIN, BAUDRATE, DISPLAY_CONFIG)
 
 MAIN_FONT = "./fonts/JetBrainsMono-SemiBold.ttf"
 
-HTTP_ENDPOINT = "http://localhost:2019/image"
+# Setup SPI bus using hardware SPI:
+spi = board.SPI()
 
-http_session = requests.Session()
-
-
-# using https://github.com/kubesail/pibox-framebuffer to render images as it python st7789 libraries cause flickering
-def send_png_buffer_to_display(png_buffer):
-    """Send PNG buffer to display server via HTTP or Unix socket"""
-
-    # Try HTTP endpoint first (default)
-    try:
-        response = http_session.post(
-            HTTP_ENDPOINT,
-            data=png_buffer,
-            headers={"Content-Type": "application/octet-stream"},
-            timeout=5,
-        )
-        if response.status_code == 200:
-            return response
-    except Exception as e:
-        print(f"Error sending PNG buffer to display: {e}")
-        return None
-
-
-
-# RGBA black pixels
-pixel_data = array.array("B", [0, 0, 0, 255] * (SCREEN_WIDTH * SCREEN_HEIGHT))
-image_info = skia.ImageInfo.Make(
-    SCREEN_WIDTH, SCREEN_HEIGHT, skia.kRGBA_8888_ColorType, skia.kOpaque_AlphaType
+# Create the ST7789 display with configuration
+disp = st7789.ST7789(
+    spi,
+    cs=CS_PIN,
+    dc=DC_PIN,
+    rst=RESET_PIN,
+    baudrate=BAUDRATE,
+    **DISPLAY_CONFIG
 )
-blank_image = skia.Image.MakeRasterData(image_info, pixel_data, SCREEN_WIDTH * 4)
-blank_image_buffer = bytes(skia.Image.encodeToData(blank_image, skia.kPNG, 100))
 
-def shutdown_handler(signum, frame):
+def send_image_to_display(pil_image):
+    """Send PIL Image directly to SPI display"""
+    try:
+        disp.image(pil_image)
+        return True
+    except Exception as e:
+        print(f"Error sending image to display: {e}")
+        traceback.print_exc()
+        return False
+
+def create_blank_image():
+    """Create a blank black image"""
+    return Image.new("RGB", (disp.width, disp.height), (0, 0, 0))
+
+
+def shutdown_handler(_signum, _frame):
     print("shutdown_handler...")
-    send_png_buffer_to_display(blank_image_buffer)
+    blank_image_final = create_blank_image()
+    send_image_to_display(blank_image_final)
     print("blank image sent...")
     sys.exit(0)
 
 
-# atexit.register(exit_handler)
 signal.signal(signal.SIGTERM, shutdown_handler)
 
 ip_stat = StatRow(
@@ -115,34 +109,39 @@ temp_stat = StatRow(
 title = Text("═ SYSTEM MONITOR ═").font_size(20).color("white")
 stats = [ip_stat, cpu_stat, mem_stat, disk_stat, temp_stat]
 
-canvas = Canvas().font_family(MAIN_FONT).size(SCREEN_HEIGHT, SCREEN_WIDTH)
+canvas = Canvas().font_family(MAIN_FONT).size(disp.width, disp.height)
+
+# Initialize display with blank screen
+blank_image = create_blank_image()
+send_image_to_display(blank_image)
+
 try:
-
     while True:
-
         def update_stats():
-
-            # Send image to display server
+            # Send image to display
             try:
-                stats_rows = [title] + [stat.update_compose() for stat in stats]
-                composition = Column(*stats_rows).padding(15, 15, 15, 15).font_size(18)
+                stats_rows = [title] + [stat.update_compose().max_width(disp.width) for stat in stats]
+                composition = Column(*stats_rows).font_size(18)
 
-                # Render and get PNG buffer directly from skia_image
-                rendered = canvas.render(composition)
+                pil_image = canvas.render(composition).to_pillow()
 
-                png_data = skia.Image.encodeToData(rendered.skia_image, skia.kPNG, 100)
-                png_buffer = bytes(png_data)
-                send_png_buffer_to_display(png_buffer)
+                # Ensure RGB mode for display compatibility                
+                # print(f"Converting PIL image from {pil_image.mode} to RGB mode")
+                pil_image = (pil_image.convert('RGB')) if pil_image.mode != 'RGB' else pil_image
+
+                # Send directly to SPI display
+                send_image_to_display(pil_image)
 
             except Exception as e:
-                print(f"Error rendering or sending image to display: {e}")
+                print(f"Error rendering or sending image to display: {e}")                
+                traceback.print_exc()
 
-        # Repeated rendering in Canvas leaks memory pretty quiickly. I've tried expclicit go.collect() in addition to malloc_trim
-        # but the process memmory never went down, hence this process forking
+        # Repeated rendering in Canvas leaks memory pretty quickly. I've tried explicit gc.collect() in addition
+        # to malloc_trim, but the process memory never went down, hence this process forking
         proc = mp.Process(target=update_stats)
         proc.start()
         proc.join()
 
         time.sleep(1)
 except KeyboardInterrupt:
-    shutdown_handler(0,0)
+    shutdown_handler(0, 0)

@@ -1,15 +1,10 @@
+import os
 import socket
 import psutil
-import os
 
 # Environment configuration
 psutil.PROCFS_PATH = os.getenv("PROCFS_PATH", psutil.PROCFS_PATH)
 DISK_ROOT = os.getenv("DISK_ROOT", "/")
-
-# cpu_percent(None) returns percentage since last call to cpu_percent. 
-# First ever call will always return 0.0, that why we do this dummy call to ignore this first value
-# https://psutil.readthedocs.io/en/latest/#psutil.cpu_percent
-psutil.cpu_percent(None)
 
 class SystemStats:
     """Static class for collecting system statistics"""
@@ -22,14 +17,13 @@ class SystemStats:
             ip_addr = s.getsockname()[0]
             s.close()
             return ip_addr
-        except:
+        except psutil.Error:
             return "N/A"
 
     @staticmethod
     def get_cpu_stats():
         """Get CPU load average"""
-        return psutil.cpu_percent(None)
-        # return psutil.getloadavg()[0]
+        return psutil.cpu_percent(1.0)
 
     @staticmethod
     def get_memory_stats():
@@ -56,5 +50,5 @@ class SystemStats:
                 with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
                     cpu_temp = int(f.read().strip()) / 1000
             return cpu_temp
-        except:
+        except psutil.Error:
             return 0

@@ -1,31 +1,35 @@
 #!/bin/bash
 
-# Run script for the complete stats monitoring stack
+# Run script for the SPI stats monitoring with Docker (Direct SPI mode)
+# This uses Docker container with direct SPI hardware access
 
 set -e
 
-echo "Starting the complete stats monitoring stack..."
+echo "Starting SPI Stats Monitor with Docker (Direct SPI mode)..."
+echo "========================================================="
+echo ""
 echo "This will:"
-echo "1. Pull and start pibox-framebuffer from ghcr.io/cybermaak/pibox-framebuffer:latest"
-echo "2. Build and start the stats monitoring service"
+echo "1. Build the spi-stats container with direct SPI support"
+echo "2. Start the stats monitoring service with hardware access"
+echo ""
+echo "Note: This requires privileged container access for SPI hardware"
 echo ""
 
-# Pull the latest pibox-framebuffer image
-echo "Pulling latest pibox-framebuffer image..."
-sudo docker pull ghcr.io/cybermaak/pibox-framebuffer:latest
-
-# Start the stack using docker-compose
-echo "Starting services with docker-compose..."
-sudo docker compose up -d
+# Build and start the service using docker-compose
+echo "Building and starting SPI stats service..."
+sudo docker compose up -d --build
 
 echo ""
-echo "Services started successfully!"
-echo "- pibox-framebuffer is running on localhost:2019"
-echo "- stats service is monitoring system and sending data to the display"
+echo "Service started successfully!"
+echo "============================="
+echo "- spi-stats is running with direct SPI hardware access"
+echo "- Stats are displayed directly on the connected ST7789 display"
 echo ""
 echo "To view logs:"
-echo "  sudo docker compose logs -f pibox-framebuffer"
-echo "  sudo docker compose logs -f stats"
+echo "  sudo docker compose logs -f spi-stats"
 echo ""
-echo "To stop services:"
-echo "  sudo docker compose down"
+echo "To stop service:"
+echo "  ./stop.sh"
+echo ""
+echo "Alternative deployment mode:"
+echo "- Native SPI: ./run-local.sh"

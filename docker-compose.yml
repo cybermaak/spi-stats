@@ -1,32 +1,18 @@
 services:
-  pibox-framebuffer:
-    image: ghcr.io/cybermaak/pibox-framebuffer:latest
+  spi-stats:
+    build: .
+    image: spi-stats
     privileged: true
     devices:
       - /dev/mem:/dev/mem
       - /dev/gpiomem:/dev/gpiomem
       - /dev/spidev0.0:/dev/spidev0.0
       - /dev/spidev0.1:/dev/spidev0.1
-    restart: unless-stopped
-    ports:
-      - "2019:2019"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:2019/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
-  spi-stats:
-    build: .
-    image: spi-stats
-    depends_on:
-      - pibox-framebuffer
-    network_mode: "host"
     volumes:
       - /proc:/host/proc:ro # Mount host's /proc to /host/proc to pull host stats
       - /:/host/disk_root:ro # Mount host's root disk to get host disk stats
     restart: unless-stopped
+    network_mode: host
     healthcheck:
       test: [ "CMD", "pgrep", "-f", "python3 /app/src/stats.py" ]
       interval: 30s
