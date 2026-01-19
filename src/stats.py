@@ -18,7 +18,7 @@ from display_config import (
     BAUDRATE, DISPLAY_CONFIG, TITLE_FONT_SIZE, STATS_FONT_SIZE
 )
 
-MAIN_FONT = "./fonts/JetBrainsMono-SemiBold.ttf"
+MAIN_FONT = "./fonts/FiraCodeNerdFont-Light.ttf"
 
 # Setup SPI bus using hardware SPI:
 spi = board.SPI()
@@ -62,7 +62,7 @@ def shutdown_handler(_signum, _frame):
 signal.signal(signal.SIGTERM, shutdown_handler)
 
 ip_stat = StatRow(
-    icon="🌐",
+    icon="\uef09",
     label="",
     color="lightblue",
     get_stat=SystemStats.get_ip_address,
@@ -72,8 +72,8 @@ ip_stat = StatRow(
 )
 
 cpu_stat = StatRow(
-    icon="⚡",
-    label="CPU: ",
+    icon="\uf4bc",
+    label="",
     color="yellow",
     get_stat=SystemStats.get_cpu_stats,
     state_string=lambda stat: f"{stat:.2f}%",
@@ -82,18 +82,18 @@ cpu_stat = StatRow(
 )
 
 mem_stat = StatRow(
-    icon="💾",
-    label="RAM: ",
+    icon="\uefc5",
+    label="",
     color="lightgreen",
     get_stat=SystemStats.get_memory_stats,
-    state_string=lambda memory: f" {naturalsize(memory.used, False, True)}/{naturalsize(memory.total, False, True)} ({(memory.percent):.0f}%)",
+    state_string=lambda memory: f"{naturalsize(memory.used, False, True)}/{naturalsize(memory.total, False, True)} ({(memory.percent):.0f}%)",
     is_warning=lambda memory: memory.percent >= 70,
     is_critical=lambda memory: memory.percent >= 85,
 )
 
 disk_stat = StatRow(
-    icon="💿",
-    label="Disk: ",
+    icon="\uf472",
+    label="",
     color="lightcyan",
     get_stat=SystemStats.get_disk_stats,
     state_string=lambda disk: f"{naturalsize(disk.used, False, True)}/{naturalsize(disk.total, False, True)} ({(disk.used / disk.total) * 100:.0f}%)",
@@ -102,8 +102,8 @@ disk_stat = StatRow(
 )
 
 temp_stat = StatRow(
-    icon="🌡️",
-    label="Temp: ",
+    icon="\uf2c9",
+    label="",
     color="cyan",
     get_stat=SystemStats.get_temperature_stats,
     state_string=lambda cpu_temp: f"{cpu_temp:.1f}°C",
@@ -125,7 +125,7 @@ stats = [ip_stat, cpu_stat, mem_stat, disk_stat, temp_stat]
 
 canvas = Canvas().font_family(MAIN_FONT).size(width, height)
 
-print(f"Display initialized: {disp.width}x{disp.height}, rotation: {disp.rotation}")
+print(f"\uf4bcDisplay initialized: {disp.width}x{disp.height}, rotation: {disp.rotation}")
 # Initialize display with blank screen
 blank_image = create_blank_image(width, height)
 send_image_to_display(blank_image)
@@ -144,7 +144,7 @@ try:
                 #print("Timestamp 3:", time.time())
 
                 # Ensure RGB mode for display compatibility                
-                # print(f"Converting PIL image from {pil_image.mode} to RGB mode")
+                #print(f"Converting PIL image from {pil_image.mode} to RGB mode")
                 pil_image = (pil_image.convert('RGB')) if pil_image.mode != 'RGB' else pil_image
 
                 pil_image = ImageOps.contain(pil_image, (width, height))
