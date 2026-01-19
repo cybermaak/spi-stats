@@ -8,6 +8,7 @@ import time
 import sys
 import traceback
 import board
+import digitalio
 from PIL import Image, ImageDraw, ImageFont
 from adafruit_rgb_display import st7789
 from display_config import (
@@ -34,6 +35,10 @@ def main():
             baudrate=BAUDRATE,
             **DISPLAY_CONFIG
         )
+
+        backlight = digitalio.DigitalInOut(board.D22)
+        backlight.switch_to_output()
+        backlight.value = True
 
         print(f"Display initialized: {disp.width}x{disp.height}")
 

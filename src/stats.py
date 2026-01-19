@@ -2,10 +2,10 @@ import time
 import signal
 import sys
 import multiprocessing as mp
-import io
 import traceback
 
 import board
+import digitalio
 from PIL import Image, ImageOps
 from pictex import Column, Canvas, Text
 from humanize import naturalsize
@@ -13,10 +13,7 @@ from humanize import naturalsize
 from adafruit_rgb_display import st7789
 from system_stats import SystemStats
 from stat_row import StatRow
-from display_config import (
-    SCREEN_WIDTH, SCREEN_HEIGHT, CS_PIN, DC_PIN, RESET_PIN, 
-    BAUDRATE, DISPLAY_CONFIG, TITLE_FONT_SIZE, STATS_FONT_SIZE
-)
+from display_config import (CS_PIN, DC_PIN, RESET_PIN, BAUDRATE, DISPLAY_CONFIG, TITLE_FONT_SIZE, STATS_FONT_SIZE)
 
 MAIN_FONT = "./fonts/FiraCodeNerdFont-Light.ttf"
 
@@ -32,6 +29,11 @@ disp = st7789.ST7789(
     baudrate=BAUDRATE,
     **DISPLAY_CONFIG
 )
+
+#in one instance the display backlight just turned off and won't turn on even with reboot
+backlight = digitalio.DigitalInOut(board.D22)
+backlight.switch_to_output()
+backlight.value = True
 
 def send_image_to_display(pil_image):
     """Send PIL Image directly to SPI display"""
