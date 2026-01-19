@@ -137,9 +137,7 @@ src/
 ### Direct SPI Mode:
 - `adafruit-circuitpython-rgb-display` - Display driver
 - `adafruit-blinka` - CircuitPython compatibility
-- `pillow` - Image processing
-- `pictex` - UI rendering
-- `skia-python` - Graphics rendering
+- `pillow` - Image processing and rendering
 - `psutil` - System statistics
 - `humanize` - Human-readable formatting
 

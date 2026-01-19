@@ -12,7 +12,7 @@ import digitalio
 from PIL import Image, ImageDraw, ImageFont
 from adafruit_rgb_display import st7789
 from display_config import (
-    SCREEN_WIDTH, SCREEN_HEIGHT, CS_PIN, DC_PIN, RESET_PIN,
+    CS_PIN, DC_PIN, RESET_PIN,
     BAUDRATE, DISPLAY_CONFIG
 )
 

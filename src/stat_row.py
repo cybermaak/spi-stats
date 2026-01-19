@@ -1,8 +1,3 @@
-from pictex import Row, Text, TextAlign
-from display_config import ( STATS_FONT_SIZE )
-
-EMOJI_FONT = "/home/maak/.local/share/fonts/firacode-nerd-font/FiraCodeNerdFont-Light.ttf"
-
 class StatRow:
     """A class representing a single statistic row with icon, label, and dynamic value"""
     def __init__(
@@ -16,8 +11,8 @@ class StatRow:
         self.is_warning = is_warning
         self.is_critical = is_critical
 
-    def update_compose(self):
-        """Update and compose the stat row with current values and appropriate colors"""
+    def get_render_data(self):
+        """Get current stat data for direct PIL rendering"""
         stat = self.get_stat()
         stat_text = self.state_string(stat)
         stat_color = (
@@ -25,9 +20,14 @@ class StatRow:
             if self.is_critical(stat)
             else "orange" if self.is_warning(stat) else self.color
         )
+        
+        return {
+            'icon': self.icon,
+            'icon_color': self.color,
+            'value': stat_text,
+            'value_color': stat_color
+        }
 
-        return Row(
-            Text(self.icon).color(self.color).size(width=2*STATS_FONT_SIZE).text_align(TextAlign.CENTER).font_weight(100),
-            Text(self.label).color(self.color),
-            Text(stat_text).color(stat_color),
-        )
+    def update_compose(self):
+        """Legacy method for compatibility - returns render data"""
+        return self.get_render_data()

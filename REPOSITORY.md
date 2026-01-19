@@ -38,7 +38,7 @@ spi-stats/
 
 **`src/stats.py`** - Main application
 - Uses `adafruit_rgb_display` for direct SPI communication
-- Converts Skia images to PIL for display
+- Uses PIL for direct image rendering and display
 - Works in both Docker and native environments
 - Includes debug output for image dimensions
 
@@ -75,8 +75,6 @@ spi-stats/
 **`requirements.txt`** - All dependencies
 ```
 psutil>=5.9.0
-pictex>=1.5.0
-skia-python>=138.0
 humanize>=4.13.0
 adafruit-circuitpython-rgb-display
 pillow

@@ -27,8 +27,6 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Copy fonts directory
 COPY fonts/ /app/fonts/
-# Removing this font conf file because it causes a noise warning in pictex
-RUN rm -f /usr/share/fontconfig/conf.avail/05-reset-dirs-sample.conf
 
 # Copy src directory
 COPY src/ /app/src/

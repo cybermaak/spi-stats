@@ -166,6 +166,6 @@ htop
 # For Docker
 sudo docker stats spi-stats
 
-# Check memory usage (pictex can leak)
+# Check memory usage
 free -h
 ```
