@@ -77,15 +77,17 @@ def create_blank_image(width, height):
 
 
 def render_stats_direct(width, height, title_text, stats_data):
+    """Direct PIL rendering for optimal performance"""
     # Create black background
     image = Image.new("RGB", (width, height), COLOR_MAP['black'])
     draw = ImageDraw.Draw(image)
 
-    # Layout constants based on the screenshot
+    # Layout constants - now relative to font sizes
     y_offset = 10  # Top margin
-    row_height = 32  # Height per row (including spacing)
+    row_height = int(STATS_FONT_SIZE * 1.8)  # Row height = 1.8x stats font size for comfortable spacing
     icon_x = 10    # Icon X position
     value_x = 40   # Value text X position
+    title_spacing = int(TITLE_FONT_SIZE * 1.5)  # Title spacing = 1.5x title font size for proportional gap
 
     # Draw title centered at top
     title_bbox = draw.textbbox((0, 0), title_text, font=title_font)
@@ -93,8 +95,8 @@ def render_stats_direct(width, height, title_text, stats_data):
     title_x = (width - title_width) // 2
     draw.text((title_x, y_offset), title_text, fill=COLOR_MAP['white'], font=title_font)
 
-    # Start drawing stats rows
-    current_y = y_offset + 35  # Space after title
+    # Start drawing stats rows - space after title is relative to title font size
+    current_y = y_offset + title_spacing
 
     for stat_data in stats_data:
         # Draw icon (left aligned)
