@@ -31,3 +31,5 @@ services:
       # Font sizes - adjust for your screen size
       - TITLE_FONT_SIZE=20
       - STATS_FONT_SIZE=18
+      - DISPLAY_MODE=visual
+      - DISPLAY_LAYOUT=grid

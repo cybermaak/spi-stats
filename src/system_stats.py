@@ -6,8 +6,10 @@ import psutil
 psutil.PROCFS_PATH = os.getenv("PROCFS_PATH", psutil.PROCFS_PATH)
 DISK_ROOT = os.getenv("DISK_ROOT", "/")
 
+
 class SystemStats:
     """Static class for collecting system statistics"""
+
     @staticmethod
     def get_ip_address():
         """Get the current IP address"""

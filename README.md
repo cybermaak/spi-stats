@@ -194,26 +194,36 @@ sudo raspi-config
 ## Project Structure
 
 ```
-src/
-├── stats.py              # Main stats monitor (direct SPI)
-├── stats_fallback.py     # Fallback version (saves to files)
-├── test_display.py       # Display test utility
-├── display_config.py     # Display configuration
-├── system_stats.py       # System statistics collection
-└── stat_row.py           # UI component for stat rows
+├── pyproject.toml        # Project configuration and dependencies
+├── uv.lock               # Lock file for reproducible builds
+├── Dockerfile            # Docker build configuration
+├── docker-compose.yml    # Docker Compose configuration
+├── run-local.sh          # Native run script (handles deps + execution)
+├── fonts/                # Font files
+└── src/
+    ├── stats.py          # Main stats monitor (direct SPI)
+    ├── rendering.py      # Shared rendering functions
+    ├── display_config.py # Display configuration
+    ├── system_stats.py   # System statistics collection
+    ├── stat_row.py       # UI component for stat rows
+    └── test_display.py   # Display test utility
 ```
 
 ## Dependencies
 
-### Direct SPI Mode:
+This project uses [uv](https://docs.astral.sh/uv/) for Python package management with `pyproject.toml` and `uv.lock` for reproducible builds.
+
+### Core Dependencies:
 - `adafruit-circuitpython-rgb-display` - Display driver
 - `adafruit-blinka` - CircuitPython compatibility
 - `pillow` - Image processing and rendering
 - `psutil` - System statistics
 - `humanize` - Human-readable formatting
+- `RPi.GPIO` - GPIO access for Raspberry Pi
+- `spidev` - SPI device interface
 
-### HTTP Server Mode:
-- All of the above plus `requests` for HTTP communication
+### Development Dependencies:
+- `yapf` - Python code formatter
 
 ## Development
 
@@ -346,7 +356,8 @@ python src/stats.py
 - Run with `sudo` if needed for hardware access
 
 ### Import Errors:
-- Install all requirements: `pip install -r requirements.txt`
+- Install uv: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Sync dependencies: `uv sync`
 - For Raspberry Pi, you may need: `sudo apt install python3-dev`
 
 **Inspiration:** 

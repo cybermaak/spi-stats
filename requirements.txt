@@ -5,3 +5,4 @@ pillow
 adafruit-blinka
 RPi.GPIO
 spidev
+yapf

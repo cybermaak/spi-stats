@@ -4,19 +4,14 @@ Test script to generate text, visual, and grid mode screenshots
 for comparison without requiring actual hardware.
 Uses shared rendering module from src/rendering.py.
 """
-from rendering import (
-    load_fonts,
-    render_stats_direct,
-    render_stats_visual,
-    render_stats_grid
-)
+from rendering import (load_fonts, render_stats_direct, render_stats_visual,
+                       render_stats_grid)
 from humanize import naturalsize
 import sys
 from collections import namedtuple
 
 # Add src to path for imports
 sys.path.insert(0, './src')
-
 
 # Constants
 TITLE_FONT_SIZE = 20
@@ -34,24 +29,98 @@ memory = MemoryStats(used=2.4e9, total=7.6e9, percent=32)
 disk = DiskStats(used=5.5e9, total=6.6e9)
 
 text_mode_data = [
-    {'icon': '\uf109', 'icon_color': 'lightblue', 'value': '192.168.88.46', 'value_color': 'lightblue'},
-    {'icon': '\uf4bc', 'icon_color': 'yellow', 'value': '75.60%', 'value_color': 'orange'},
-    {'icon': '\uefc5', 'icon_color': 'lightgreen',
-        'value': f"{naturalsize(memory.used, False, True)}/{naturalsize(memory.total, False, True)} ({memory.percent:.0f}%)", 'value_color': 'lightgreen'},
-    {'icon': '\uf472', 'icon_color': 'lightcyan',
-        'value': f"{naturalsize(disk.used, False, True)}/{naturalsize(disk.total, False, True)} ({(disk.used / disk.total) * 100:.0f}%)", 'value_color': 'orange'},
-    {'icon': '\uf2c9', 'icon_color': 'cyan', 'value': '66.7°C', 'value_color': 'cyan'},
+    {
+        'icon': '\uf109',
+        'icon_color': 'lightblue',
+        'value': '192.168.88.46',
+        'value_color': 'lightblue'
+    },
+    {
+        'icon': '\uf4bc',
+        'icon_color': 'yellow',
+        'value': '75.60%',
+        'value_color': 'orange'
+    },
+    {
+        'icon':
+            '\uefc5',
+        'icon_color':
+            'lightgreen',
+        'value':
+            f"{naturalsize(memory.used, False, True)}/{naturalsize(memory.total, False, True)} ({memory.percent:.0f}%)",
+        'value_color':
+            'lightgreen'
+    },
+    {
+        'icon':
+            '\uf472',
+        'icon_color':
+            'lightcyan',
+        'value':
+            f"{naturalsize(disk.used, False, True)}/{naturalsize(disk.total, False, True)} ({(disk.used / disk.total) * 100:.0f}%)",
+        'value_color':
+            'orange'
+    },
+    {
+        'icon': '\uf2c9',
+        'icon_color': 'cyan',
+        'value': '66.7°C',
+        'value_color': 'cyan'
+    },
 ]
 
 visual_mode_data = [
-    {'icon': '\uf109', 'icon_color': 'lightblue', 'label': '192.168.88.46',
-        'percentage': 0, 'bar_color': 'lightblue', 'has_bar': False},
-    {'icon': '\uf4bc', 'icon_color': 'yellow', 'label': '75.6%', 'percentage': 75.6, 'bar_color': 'orange', 'has_bar': True},
-    {'icon': '\uefc5', 'icon_color': 'lightgreen',
-        'label': f"{naturalsize(memory.total, False, True)} ({memory.percent:.0f}%)", 'percentage': memory.percent, 'bar_color': 'lightgreen', 'has_bar': True},
-    {'icon': '\uf472', 'icon_color': 'lightcyan', 'label': f"{naturalsize(disk.total, False, True)} ({(disk.used / disk.total) * 100:.0f}%)", 'percentage': (
-        disk.used / disk.total) * 100, 'bar_color': 'orange', 'has_bar': True},
-    {'icon': '\uf2c9', 'icon_color': 'cyan', 'label': '66.7°C', 'percentage': 66.7, 'bar_color': 'cyan', 'has_bar': True},
+    {
+        'icon': '\uf109',
+        'icon_color': 'lightblue',
+        'label': '192.168.88.46',
+        'percentage': 0,
+        'bar_color': 'lightblue',
+        'has_bar': False
+    },
+    {
+        'icon': '\uf4bc',
+        'icon_color': 'yellow',
+        'label': '75.6%',
+        'percentage': 75.6,
+        'bar_color': 'orange',
+        'has_bar': True
+    },
+    {
+        'icon':
+            '\uefc5',
+        'icon_color':
+            'lightgreen',
+        'label':
+            f"{naturalsize(memory.total, False, True)} ({memory.percent:.0f}%)",
+        'percentage':
+            memory.percent,
+        'bar_color':
+            'lightgreen',
+        'has_bar':
+            True
+    },
+    {
+        'icon':
+            '\uf472',
+        'icon_color':
+            'lightcyan',
+        'label':
+            f"{naturalsize(disk.total, False, True)} ({(disk.used / disk.total) * 100:.0f}%)",
+        'percentage': (disk.used / disk.total) * 100,
+        'bar_color':
+            'orange',
+        'has_bar':
+            True
+    },
+    {
+        'icon': '\uf2c9',
+        'icon_color': 'cyan',
+        'label': '66.7°C',
+        'percentage': 66.7,
+        'bar_color': 'cyan',
+        'has_bar': True
+    },
 ]
 
 # Generate screenshots
