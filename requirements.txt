@@ -1,8 +1,0 @@
-psutil>=5.9.0
-humanize>=4.13.0
-adafruit-circuitpython-rgb-display
-pillow
-adafruit-blinka
-RPi.GPIO
-spidev
-yapf

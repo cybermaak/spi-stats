@@ -4,7 +4,7 @@ Test script to generate text, visual, and grid mode screenshots
 for comparison without requiring actual hardware.
 Uses shared rendering module from src/rendering.py.
 """
-from rendering import (load_fonts, render_stats_direct, render_stats_visual,
+from src.rendering import (load_fonts, render_stats_direct, render_stats_visual,
                        render_stats_grid)
 from humanize import naturalsize
 import sys

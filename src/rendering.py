@@ -178,7 +178,7 @@ def render_stats_grid(width, height, title_text, stats_data, title_font,
         grid_font = ImageFont.load_default()
 
     cell_width = (width - 2 * x_margin - grid_spacing) // 2
-    cell_height = int(stats_font_size * 2.5)
+    cell_height = int(stats_font_size * 1.5)
     bar_height = int(stats_font_size * 0.9)
 
     title_bbox = draw.textbbox((0, 0), title_text, font=title_font)
@@ -236,12 +236,12 @@ def _draw_grid_cell(draw, stat_data, x, y, cell_width, cell_height, bar_height,
                     grid_font, icon_font, stats_font_size):
     """Draw a single grid cell with icon, bar, and label"""
     icon_size = int(stats_font_size * 1.2)
-    bar_y = y + icon_size + 2
-    bar_width = cell_width - 4
+    bar_y = y
+    bar_x = x + icon_size + 2
+    bar_width = cell_width - 4 - icon_size
 
     icon_bbox = draw.textbbox((0, 0), stat_data['icon'], font=icon_font)
-    icon_width = icon_bbox[2] - icon_bbox[0]
-    icon_x = x + (cell_width - icon_width) // 2
+    icon_x = x 
     draw.text((icon_x, y),
               stat_data['icon'],
               fill=COLOR_MAP[stat_data['icon_color']],
@@ -249,12 +249,12 @@ def _draw_grid_cell(draw, stat_data, x, y, cell_width, cell_height, bar_height,
 
     fill_width = int((bar_width * stat_data['percentage']) / 100)
 
-    draw.rectangle([x + 2, bar_y, x + 2 + bar_width, bar_y + bar_height],
+    draw.rectangle([bar_x + 2, bar_y, bar_x + 2 + bar_width, bar_y + bar_height],
                    fill=(40, 40, 40),
                    outline=(80, 80, 80))
 
     if fill_width > 0:
-        draw.rectangle([x + 2, bar_y, x + 2 + fill_width, bar_y + bar_height],
+        draw.rectangle([bar_x + 2, bar_y, bar_x + 2 + fill_width, bar_y + bar_height],
                        fill=COLOR_MAP[stat_data['bar_color']])
 
     label_text = stat_data['label']
@@ -263,7 +263,7 @@ def _draw_grid_cell(draw, stat_data, x, y, cell_width, cell_height, bar_height,
     label_height = label_bbox[3] - label_bbox[1]
 
     if label_width < (bar_width - 6):
-        text_x = x + 2 + (bar_width - label_width) // 2
+        text_x = bar_x + 2 + (bar_width - label_width) // 2
         text_y = bar_y + (bar_height - label_height) // 2 - label_bbox[1]
         text_color = (0, 0, 0)
         stroke_color = COLOR_MAP[stat_data['bar_color']]
@@ -275,7 +275,7 @@ def _draw_grid_cell(draw, stat_data, x, y, cell_width, cell_height, bar_height,
                   stroke_fill=stroke_color)
 
     else:
-        text_x = x + (cell_width - label_width) // 2
+        text_x = bar_x + (cell_width - label_width) // 2
         text_y = bar_y + bar_height + 2
         draw.text((text_x, text_y),
                   label_text,
