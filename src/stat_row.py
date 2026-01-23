@@ -1,5 +1,6 @@
 class StatRow:
     """A class representing a single statistic row with icon, label, and dynamic value"""
+
     def __init__(
         self, icon, label, color, get_stat, state_string, is_warning, is_critical,
         get_percentage=None, visual_label=None
@@ -23,7 +24,7 @@ class StatRow:
             if self.is_critical(stat)
             else "orange" if self.is_warning(stat) else self.color
         )
-        
+
         return {
             'icon': self.icon,
             'icon_color': self.color,
@@ -34,26 +35,26 @@ class StatRow:
     def get_visual_data(self):
         """Get data for visual mode rendering with progress bars"""
         stat = self.get_stat()
-        
+
         # Determine percentage value
         if self.get_percentage:
             percentage = self.get_percentage(stat)
         else:
             percentage = 0  # Default for non-percentage stats like IP
-        
+
         # Determine label text
         if self.visual_label:
             label_text = self.visual_label(stat)
         else:
             label_text = self.state_string(stat)
-        
+
         # Determine color based on thresholds
         stat_color = (
             "red"
             if self.is_critical(stat)
             else "orange" if self.is_warning(stat) else self.color
         )
-        
+
         return {
             'icon': self.icon,
             'icon_color': self.color,

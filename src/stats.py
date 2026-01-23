@@ -6,39 +6,22 @@ import traceback
 
 import board
 import digitalio
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 from humanize import naturalsize
 
 from adafruit_rgb_display import st7789
 from system_stats import SystemStats
 from stat_row import StatRow
 from display_config import (CS_PIN, DC_PIN, RESET_PIN, BAUDRATE, DISPLAY_CONFIG, TITLE_FONT_SIZE, STATS_FONT_SIZE, DISPLAY_MODE, DISPLAY_LAYOUT)
-
-MAIN_FONT = "./fonts/FiraCodeNerdFont-Light.ttf"
-
-# Color mapping for PIL
-COLOR_MAP = {
-    'white': (255, 255, 255),
-    'lightblue': (173, 216, 230),
-    'yellow': (255, 255, 0),
-    'lightgreen': (144, 238, 144),
-    'lightcyan': (224, 255, 255),
-    'cyan': (0, 255, 255),
-    'red': (255, 0, 0),
-    'orange': (255, 165, 0),
-    'black': (0, 0, 0)
-}
+from rendering import (
+    load_fonts,
+    render_stats_direct,
+    render_stats_visual,
+    render_stats_grid
+)
 
 # Load fonts once at startup
-try:
-    title_font = ImageFont.truetype(MAIN_FONT, TITLE_FONT_SIZE)
-    stats_font = ImageFont.truetype(MAIN_FONT, STATS_FONT_SIZE)
-    icon_font = ImageFont.truetype(MAIN_FONT, STATS_FONT_SIZE)
-except OSError:
-    # Fallback to default font if custom font fails
-    title_font = ImageFont.load_default()
-    stats_font = ImageFont.load_default()
-    icon_font = ImageFont.load_default()
+title_font, stats_font, icon_font = load_fonts(TITLE_FONT_SIZE, STATS_FONT_SIZE)
 
 # Setup SPI bus using hardware SPI:
 spi = board.SPI()
@@ -74,254 +57,6 @@ def send_image_to_display(pil_image):
 def create_blank_image(width, height):
     """Create a blank black image"""
     return Image.new("RGB", (width, height), (0, 0, 0))
-
-
-def render_stats_direct(width, height, title_text, stats_data):
-    """Direct PIL rendering for optimal performance"""
-    # Create black background
-    image = Image.new("RGB", (width, height), COLOR_MAP['black'])
-    draw = ImageDraw.Draw(image)
-
-    # Layout constants - now relative to font sizes
-    y_offset = 10  # Top margin
-    row_height = int(STATS_FONT_SIZE * 1.8)  # Row height = 1.8x stats font size for comfortable spacing
-    icon_x = 10    # Icon X position
-    value_x = 40   # Value text X position
-    title_spacing = int(TITLE_FONT_SIZE * 1.5)  # Title spacing = 1.5x title font size for proportional gap
-
-    # Draw title centered at top
-    title_bbox = draw.textbbox((0, 0), title_text, font=title_font)
-    title_width = title_bbox[2] - title_bbox[0]
-    title_x = (width - title_width) // 2
-    draw.text((title_x, y_offset), title_text, fill=COLOR_MAP['white'], font=title_font)
-
-    # Start drawing stats rows - space after title is relative to title font size
-    current_y = y_offset + title_spacing
-
-    for stat_data in stats_data:
-        # Draw icon (left aligned)
-        draw.text((icon_x, current_y), stat_data['icon'],
-                  fill=COLOR_MAP[stat_data['icon_color']], font=icon_font)
-
-        # Draw value (right of icon)
-        draw.text((value_x, current_y), stat_data['value'],
-                  fill=COLOR_MAP[stat_data['value_color']], font=stats_font)
-
-        current_y += row_height
-
-    return image
-
-
-def render_stats_visual(width, height, title_text, stats_data):
-    """Visual rendering with progress bars"""
-    # Create black background
-    image = Image.new("RGB", (width, height), COLOR_MAP['black'])
-    draw = ImageDraw.Draw(image)
-
-    # Layout constants - relative to font sizes
-    y_offset = 10  # Top margin
-    row_height = int(STATS_FONT_SIZE * 1.8)  # Row height for comfortable spacing
-    icon_x = 10    # Icon X position
-    bar_start_x = 40  # Bar start position (right of icon)
-    bar_width = width - bar_start_x - 10  # Bar width (to right edge with margin)
-    bar_height = int(STATS_FONT_SIZE * 1.2)  # Increased bar height for better text fit
-    title_spacing = int(TITLE_FONT_SIZE * 1.5)  # Title spacing
-    
-    # Create smaller font for bar labels (70% of stats font size)
-    bar_font_size = int(STATS_FONT_SIZE * 0.7)
-    try:
-        bar_font = ImageFont.truetype(MAIN_FONT, bar_font_size)
-    except OSError:
-        bar_font = ImageFont.load_default()
-
-    # Draw title centered at top
-    title_bbox = draw.textbbox((0, 0), title_text, font=title_font)
-    title_width = title_bbox[2] - title_bbox[0]
-    title_x = (width - title_width) // 2
-    draw.text((title_x, y_offset), title_text, fill=COLOR_MAP['white'], font=title_font)
-
-    # Start drawing stats rows
-    current_y = y_offset + title_spacing
-
-    for stat_data in stats_data:
-        # Draw icon (left aligned)
-        draw.text((icon_x, current_y), stat_data['icon'],
-                  fill=COLOR_MAP[stat_data['icon_color']], font=icon_font)
-
-        if stat_data['has_bar']:
-            # Calculate bar fill width based on percentage
-            fill_width = int((bar_width * stat_data['percentage']) / 100)
-            
-            # Bar vertical position (centered with row)
-            bar_y = current_y + int((STATS_FONT_SIZE - bar_height) / 2)
-            
-            # Draw background bar (empty portion) - dark gray
-            draw.rectangle(
-                [bar_start_x, bar_y, bar_start_x + bar_width, bar_y + bar_height],
-                fill=(40, 40, 40),
-                outline=(80, 80, 80)
-            )
-            
-            # Draw filled bar (progress portion)
-            if fill_width > 0:
-                draw.rectangle(
-                    [bar_start_x, bar_y, bar_start_x + fill_width, bar_y + bar_height],
-                    fill=COLOR_MAP[stat_data['bar_color']]
-                )
-            
-            # Draw label text inside the bar
-            label_text = stat_data['label']
-            label_bbox = draw.textbbox((0, 0), label_text, font=bar_font)
-            label_width = label_bbox[2] - label_bbox[0]
-            label_height = label_bbox[3] - label_bbox[1]
-            
-            # Check if text fits inside bar, otherwise position outside
-            if label_width < (bar_width - 10):  # 10px margin
-                # Center text in bar area
-                text_x = bar_start_x + (bar_width - label_width) // 2
-                text_y = bar_y + (bar_height - label_height) // 2 - label_bbox[1]
-                # Use black text for better contrast on colored bars
-                draw.text((text_x, text_y), label_text,
-                          fill=(0, 0, 0), font=bar_font)
-            else:
-                # Text doesn't fit, place to the right of bar
-                text_x = bar_start_x + bar_width + 5
-                text_y = current_y
-                draw.text((text_x, text_y), label_text,
-                          fill=COLOR_MAP['white'], font=bar_font)
-        else:
-            # For non-bar items (like IP address), just draw the label text
-            draw.text((bar_start_x, current_y), stat_data['label'],
-                      fill=COLOR_MAP[stat_data['bar_color']], font=stats_font)
-
-        current_y += row_height
-
-    return image
-
-
-def render_stats_grid(width, height, title_text, stats_data):
-    """Grid layout rendering with 2xn arrangement"""
-    # Create black background
-    image = Image.new("RGB", (width, height), COLOR_MAP['black'])
-    draw = ImageDraw.Draw(image)
-
-    # Layout constants
-    y_offset = 10  # Top margin
-    x_margin = 10  # Side margin
-    grid_spacing = 8  # Space between grid cells
-    title_spacing = int(TITLE_FONT_SIZE * 1.2)  # Reduced title spacing for grid
-    
-    # Create smaller font for grid labels (65% of stats font size)
-    grid_font_size = int(STATS_FONT_SIZE * 0.65)
-    try:
-        grid_font = ImageFont.truetype(MAIN_FONT, grid_font_size)
-    except OSError:
-        grid_font = ImageFont.load_default()
-    
-    # Grid cell dimensions (2 columns)
-    cell_width = (width - 2 * x_margin - grid_spacing) // 2
-    cell_height = int(STATS_FONT_SIZE * 2.5)  # Height per grid cell
-    bar_height = int(STATS_FONT_SIZE * 0.9)  # Bar height in grid
-
-    # Draw title centered at top
-    title_bbox = draw.textbbox((0, 0), title_text, font=title_font)
-    title_width = title_bbox[2] - title_bbox[0]
-    title_x = (width - title_width) // 2
-    draw.text((title_x, y_offset), title_text, fill=COLOR_MAP['white'], font=title_font)
-
-    # Starting position for grid
-    current_y = y_offset + title_spacing
-    
-    # Separate IP from other stats (IP spans full width as first row)
-    ip_data = None
-    grid_stats = []
-    for stat_data in stats_data:
-        if not stat_data['has_bar']:
-            ip_data = stat_data
-        else:
-            grid_stats.append(stat_data)
-    
-    # Draw IP address spanning full width
-    if ip_data:
-        # Draw icon
-        draw.text((x_margin, current_y), ip_data['icon'],
-                  fill=COLOR_MAP[ip_data['icon_color']], font=icon_font)
-        # Draw IP text
-        draw.text((x_margin + 30, current_y), ip_data['label'],
-                  fill=COLOR_MAP[ip_data['bar_color']], font=stats_font)
-        current_y += int(STATS_FONT_SIZE * 1.6)
-    
-    # Draw remaining stats in 2-column grid
-    for i in range(0, len(grid_stats), 2):
-        # Calculate row position
-        row_y = current_y
-        
-        # Draw left cell (first stat in pair)
-        if i < len(grid_stats):
-            stat_data = grid_stats[i]
-            cell_x = x_margin
-            draw_grid_cell(draw, stat_data, cell_x, row_y, cell_width, cell_height, bar_height, grid_font)
-        
-        # Draw right cell (second stat in pair)
-        if i + 1 < len(grid_stats):
-            stat_data = grid_stats[i + 1]
-            cell_x = x_margin + cell_width + grid_spacing
-            draw_grid_cell(draw, stat_data, cell_x, row_y, cell_width, cell_height, bar_height, grid_font)
-        
-        current_y += cell_height + grid_spacing
-
-    return image
-
-
-def draw_grid_cell(draw, stat_data, x, y, cell_width, cell_height, bar_height, grid_font):
-    """Draw a single grid cell with icon, bar, and label"""
-    icon_size = int(STATS_FONT_SIZE * 1.2)
-    bar_y = y + icon_size + 2
-    bar_width = cell_width - 4
-    
-    # Draw icon centered above bar
-    icon_bbox = draw.textbbox((0, 0), stat_data['icon'], font=icon_font)
-    icon_width = icon_bbox[2] - icon_bbox[0]
-    icon_x = x + (cell_width - icon_width) // 2
-    draw.text((icon_x, y), stat_data['icon'],
-              fill=COLOR_MAP[stat_data['icon_color']], font=icon_font)
-    
-    # Calculate bar fill width based on percentage
-    fill_width = int((bar_width * stat_data['percentage']) / 100)
-    
-    # Draw background bar
-    draw.rectangle(
-        [x + 2, bar_y, x + 2 + bar_width, bar_y + bar_height],
-        fill=(40, 40, 40),
-        outline=(80, 80, 80)
-    )
-    
-    # Draw filled bar
-    if fill_width > 0:
-        draw.rectangle(
-            [x + 2, bar_y, x + 2 + fill_width, bar_y + bar_height],
-            fill=COLOR_MAP[stat_data['bar_color']]
-        )
-    
-    # Draw label text inside the bar
-    label_text = stat_data['label']
-    label_bbox = draw.textbbox((0, 0), label_text, font=grid_font)
-    label_width = label_bbox[2] - label_bbox[0]
-    label_height = label_bbox[3] - label_bbox[1]
-    
-    # Center text in bar
-    if label_width < (bar_width - 6):
-        text_x = x + 2 + (bar_width - label_width) // 2
-        text_y = bar_y + (bar_height - label_height) // 2 - label_bbox[1]
-        # Use black text for better contrast
-        draw.text((text_x, text_y), label_text,
-                  fill=(0, 0, 0), font=grid_font)
-    else:
-        # Text too wide, place below bar
-        text_x = x + (cell_width - label_width) // 2
-        text_y = bar_y + bar_height + 2
-        draw.text((text_x, text_y), label_text,
-                  fill=COLOR_MAP['white'], font=grid_font)
 
 
 def shutdown_handler(_signum, _frame):
@@ -431,14 +166,20 @@ try:
                     
                     # Choose layout: grid or rows
                     if DISPLAY_LAYOUT == 'grid':
-                        pil_image = render_stats_grid(width, height, title_text, stats_data)
+                        pil_image = render_stats_grid(width, height, title_text, stats_data,
+                                                       title_font, stats_font, icon_font,
+                                                       STATS_FONT_SIZE, TITLE_FONT_SIZE)
                     else:
-                        pil_image = render_stats_visual(width, height, title_text, stats_data)
+                        pil_image = render_stats_visual(width, height, title_text, stats_data,
+                                                         title_font, stats_font, icon_font,
+                                                         STATS_FONT_SIZE, TITLE_FONT_SIZE)
                 else:
                     # Collect stats data for text mode (default)
                     stats_data = [stat.update_compose() for stat in stats]
                     # Render with text mode (rows layout only)
-                    pil_image = render_stats_direct(width, height, title_text, stats_data)
+                    pil_image = render_stats_direct(width, height, title_text, stats_data,
+                                                     title_font, stats_font, icon_font,
+                                                     STATS_FONT_SIZE, TITLE_FONT_SIZE)
                 
                 pil_image.save("screenshot.png")
                 # Send directly to SPI display
