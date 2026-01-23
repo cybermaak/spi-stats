@@ -30,6 +30,14 @@ DISPLAY_CONFIG = {
 TITLE_FONT_SIZE = int(os.getenv('TITLE_FONT_SIZE', '20'))
 STATS_FONT_SIZE = int(os.getenv('STATS_FONT_SIZE', '18'))
 
+# Display mode - configurable via environment variables
+# Options: 'text' (default) or 'visual' (progress bars)
+DISPLAY_MODE = os.getenv('DISPLAY_MODE', 'text').lower()
+
+# Display layout - configurable via environment variables
+# Options: 'rows' (default) or 'grid' (2-column grid layout)
+DISPLAY_LAYOUT = os.getenv('DISPLAY_LAYOUT', 'rows').lower()
+
 # Common ST7789 configurations (for reference):
 
 # 240x240 Square Display (default)

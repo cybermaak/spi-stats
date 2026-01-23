@@ -53,6 +53,77 @@ The project supports various ST7789 display configurations through environment v
 | `DISPLAY_Y_OFFSET` | Y-axis offset for display alignment | 70 |
 | `TITLE_FONT_SIZE` | Font size for the title text | 20 |
 | `STATS_FONT_SIZE` | Font size for the statistics text | 18 |
+| `DISPLAY_MODE` | Display mode: `text` or `visual` | text |
+| `DISPLAY_LAYOUT` | Layout for visual mode: `rows` or `grid` | rows |
+
+### Display Modes
+
+The project supports two display modes:
+
+**Text Mode (Default):**
+- Shows statistics as text with icons
+- Format: Icon + Value (e.g., "75.60%", "2.4G/7.6G (32%)")
+- Compact and information-dense
+
+**Visual Mode:**
+- Shows statistics with progress bars
+- Color-coded bars based on warning/critical thresholds
+- Simplified labels for memory and disk (total + percentage only)
+- More intuitive at-a-glance understanding
+
+### Display Layouts (Visual Mode Only)
+
+**Rows Layout (Default):**
+- Statistics displayed in vertical rows
+- One stat per row with icon + progress bar + label
+
+**Grid Layout:**
+- Statistics displayed in a 2-column grid
+- IP address spans full width at top
+- CPU/Memory and Disk/Temperature in 2x2 grid
+- More compact layout, better use of screen space
+
+To enable visual mode, set `DISPLAY_MODE=visual` in your environment variables or docker-compose.yml.
+
+**Example: Enabling Visual Mode in Docker:**
+
+Edit your `docker-compose.yml` and add the environment variable:
+
+```yml
+environment:
+  - DISPLAY_MODE=visual
+  - SCREEN_WIDTH=240
+  - SCREEN_HEIGHT=240
+  # ... other settings
+```
+
+**Example: Enabling Visual Mode Natively:**
+
+```bash
+export DISPLAY_MODE=visual
+./run-local.sh
+```
+
+**Visual Comparison:**
+
+<table>
+<tr>
+<td><b>Text Mode (Default)</b></td>
+<td><b>Visual Mode</b></td>
+</tr>
+<tr>
+<td>
+• Compact text display<br>
+• Full usage details<br>
+• Higher information density
+</td>
+<td>
+• Progress bars<br>
+• At-a-glance understanding<br>
+• Color-coded status
+</td>
+</tr>
+</table>
 
 ### Pre-configured Display Sizes
 
@@ -287,4 +358,3 @@ After reflashing the Pi, I couldn't find a decent out-of-box solution for displa
 This is how the stats look:
 
 ![screenshot](./screenshot.png)
-
